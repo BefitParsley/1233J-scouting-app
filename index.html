@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VEX VRC Scouting App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+  <div class="max-w-6xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-4">VEX VRC Scouting App</h1>
+    <div class="flex gap-4 mb-6">
+      <input id="eventCode" type="text" placeholder="Enter Event Code (e.g. RE-VRC-23-3690)" class="w-full px-4 py-2 border rounded" />
+      <button onclick="loadTeams()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Load Teams</button>
+    </div>
+
+    <div class="overflow-auto max-h-[70vh]">
+      <table id="scoutingTable" class="min-w-full table-auto border text-sm">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="border px-2 py-1">Team</th>
+            <th class="border px-2 py-1">Top Level</th>
+            <th class="border px-2 py-1">Second Level</th>
+            <th class="border px-2 py-1">Low Level</th>
+            <th class="border px-2 py-1">Loader Unloading</th>
+            <th class="border px-2 py-1">Auton</th>
+            <th class="border px-2 py-1"># of Pieces</th>
+            <th class="border px-2 py-1">Climb</th>
+            <th class="border px-2 py-1">Buddy Climb</th>
+            <th class="border px-2 py-1">Notes</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="mt-6">
+      <button onclick="exportCSV()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Export CSV</button>
+    </div>
+  </div>
+
+  <script>
+    const apiKey = 'YOUR_API_KEY_HERE'; // Replace with your read-only RobotEvents API key
+
+    async function loadTeams() {
+      const eventCode = document.getElementById('eventCode').value.trim();
+      const tableBody = document.getElementById('tableBody');
+      tableBody.innerHTML = '';
+
+      if (!eventCode) {
+        alert('Please enter an event code.');
+        return;
+      }
+
+      try {
+        const eventRes = await fetch(`https://www.robotevents.com/api/v2/events?sku=${eventCode}`, {
+          headers: { Authorization: `Bearer ${apiKey}` }
+        });
+        const eventData = await eventRes.json();
+        if (!eventData.data.length) throw new Error('Event not found');
+
+        const eventId = eventData.data[0].id;
+        const teamRes = await fetch(`https://www.robotevents.com/api/v2/events/${eventId}/teams`, {
+          headers: { Authorization: `Bearer ${apiKey}` }
+        });
+        const teamData = await teamRes.json();
+
+        teamData.data.forEach(team => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td class="border px-2 py-1 font-medium">${team.team_number}</td>
+            ${[...Array(8)].map(() => `<td class="border px-2 py-1"><input type="text" class="w-full px-1 py-1 border rounded"></td>`).join('')}
+            <td class="border px-2 py-1"><textarea class="w-full px-1 py-1 border rounded"></textarea></td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (error) {
+        alert('Error loading teams: ' + error.message);
+      }
+    }
+
+    function exportCSV() {
+      const rows = document.querySelectorAll('#scoutingTable tbody tr');
+      const headers = ["Team", "Top Level", "Second Level", "Low Level", "Loader Unloading", "Auton", "# of Pieces", "Climb", "Buddy Climb", "Notes"];
+      const csv = [headers.join(',')];
+
+      rows.forEach(row => {
+        const values = [...row.querySelectorAll('td')].map(td => {
+          const input = td.querySelector('input, textarea');
+          return input ? '"' + input.value.replace(/"/g, '""') + '"' : td.innerText;
+        });
+        csv.push(values.join(','));
+      });
+
+      const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'scouting_data.csv';
+      link.click();
+    }
+  </script>
+</body>
+</html>
