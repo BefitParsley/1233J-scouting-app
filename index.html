@@ -1,155 +1,59 @@
-<!DOCTYPE html>
+
+
+        teams.forEach(team => {
+          const container = document.createElement("div");
+          container.className = "team-container";
+          container.innerHTML = `
+            <h3>${team.team.name} (${team.team.number})</h3>
+            <label>Drive Type: <input type="text" /></label><br>
+            <label>Autonomous Strategy: <input type="text" /></label><br>
+            <label>Notes:<br><textarea></textarea></label>
+            <hr>
+          `;
+          teamList.appendChild(container);
+        });
+      } catch (error) {
+        console.error(error);
+        teamList.innerHTML = "Failed to load teams.<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>VEX Event Scouting</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 2rem;
-      max-width: 1000px;
+  <meta charset="UTF-8">
+  <title>VEX Scouting App</title>
+  <script>
+    async function fetchTeams() {
+      const eventCode = document.getElementById("event-code").value;
+      const teamList = document.getElementById("team-list");
+      teamList.innerHTML = "Loading teams...";
+
+      try {
+        // Step 1: Use the event code to find the event ID
+        const eventRes = await fetch(`https://www.robotevents.com/api/v2/events?sku=${eventCode}`, {
+          headers: {
+            "Accept": "application/json",
+          }
+        });
+        const eventData = await eventRes.json();
+        if (!eventData.data || eventData.data.length === 0) {
+          teamList.innerHTML = "Event not found.";
+          return;
+        }
+        const eventId = eventData.data[0].id;
+
+        // Step 2: Call your proxy to get all teams
+        const proxyUrl = `https://your-proxy.com/teams/${eventId}`; // Change this
+        const res = await fetch(proxyUrl);
+        const teams = await res.json();
+
+        teamList.innerHTML = ""; // Clear loading text";
+      }
     }
-    .team {
-      border: 1px solid #ccc;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      border-radius: 6px;
-    }
-    .team-name {
-      font-weight: bold;
-      font-size: 1.2rem;
-      margin-bottom: 0.5rem;
-    }
-    .questions {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .question {
-      flex: 1 1 150px;
-      display: flex;
-      flex-direction: column;
-    }
-    label {
-      font-size: 0.9rem;
-      margin-bottom: 0.25rem;
-    }
-    input[type="text"], select {
-      padding: 0.3rem;
-      font-size: 1rem;
-    }
-  </style>
+  </script>
 </head>
 <body>
-
-  <h1>Teams at Event</h1>
-  <div id="teamsContainer">Loading teams...</div>
-
-  <script>
-    const eventId = 59926; // Replace with your event ID
-    const API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzIiwianRpIjoiMmRmOTQzZDg0NDgxOTE5MWIzNWU4OWYxZDgxZjYyZDAyMDcxZDMwOWU5OGNjODFiYjU1OWIyMmViY2Q5YjFkZTgyOTU2NGRlYjM3Mjg2YWUiLCJpYXQiOjE3NDg5MTI3MzkuNTU1ODQsIm5iZiI6MTc0ODkxMjczOS41NTU4NDEsImV4cCI6MjY5NTU5NzUzOS41NTA0MjcsInN1YiI6IjExMzg4MyIsInNjb3BlcyI6W119.gHQWD7TYswi6zt_rO-mlKarGdPITf05hmXq_6It3M3Of_9oJYwuVE_dY97U-QG_L8T2w4X2oqY3vJxG2ummw5Q8Vb4AhbKzfGy31Gl8um7RJyTsnR_V_LTC9y7yx0C_LhVeaLTgEX3PCnu5dbLmOimGxa1UDwGef5TYKg3CiIgvWyg0x9QMVjL_NhUDQHaJu_Fy5FpNEawKjyoVpLhaRyX2QoTmZbaLO8ItKza8Tl3k4mjRU9fF18AizxAiErcTwiQHIZdUBD6ylk_SL_E01nRv0en7VHyko8x0oe161ZT-q3NdXKmTV-o_3L1x-cRGufnaCMfwdmtx5WeAA8xoJ-ccUDBwZDTZbTeZw1VnOQPI_mqhC1cGSOvPmE47lqDPno56cATRNCgyfuPqlYkyvHx09ie9oSOyNiIUGDG82S6742x-0oLGpNTlD3elKUq6j1Q0Wob8SFhhAwMPGjXZRfQQ1YB9qiRssz1M1phWWbyzSfXMoqa2pF0nItWFv3egGXxfcSD70-jfdCcwNg1dNXDy0Ax2jk8Fhmf1jljkKKP0I38FEME2PlNoYfepwIlRJNik7vAaRobXeGIp7l9H_i3Y_ZwVnWqbEd3Lr8MI7BGiegVEbk3T-GzkVL90uTDvnzR6B2Hf0TQCVSlvPNH5LUZ2m2ajk9vVhJESRuvXqSGY"; // <-- INSERT YOUR READ-ONLY API KEY HERE
-    const API_BASE = "https://www.robotevents.com/api/v2";
-    const teamsContainer = document.getElementById('teamsContainer');
-
-    const scoutingQuestions = [
-      { id: 'auton', label: 'Autonomous Performance', type: 'select', options: ['Poor', 'Average', 'Good', 'Excellent'] },
-      { id: 'driver', label: 'Driver Skill', type: 'select', options: ['Poor', 'Average', 'Good', 'Excellent'] },
-      { id: 'notes', label: 'Notes', type: 'text' }
-    ];
-
-    async function fetchTeamsPage(page = 1) {
-      const url = `${API_BASE}/events/${eventId}/teams?page=${page}&limit=100`;
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${API_KEY}`,
-          'Accept': 'application/json'
-        }
-      });
-      if (!response.ok) {
-        throw new Error(`API request failed with status ${response.status}`);
-      }
-      return response.json();
-    }
-
-    async function loadAllTeams() {
-      try {
-        let allTeams = [];
-        let page = 1;
-        let totalPages;
-
-        do {
-          const data = await fetchTeamsPage(page);
-          allTeams.push(...data.data);
-          totalPages = data.meta.last_page;
-          page++;
-        } while (page <= totalPages);
-
-        displayTeams(allTeams);
-      } catch (error) {
-        teamsContainer.textContent = 'Error loading teams: ' + error.message;
-      }
-    }
-
-    function displayTeams(teams) {
-      if (teams.length === 0) {
-        teamsContainer.textContent = 'No teams found.';
-        return;
-      }
-
-      teamsContainer.innerHTML = '';
-      teams.forEach(team => {
-        const teamDiv = document.createElement('div');
-        teamDiv.className = 'team';
-
-        const nameEl = document.createElement('div');
-        nameEl.className = 'team-name';
-        nameEl.textContent = team.team_name;
-        teamDiv.appendChild(nameEl);
-
-        const questionsDiv = document.createElement('div');
-        questionsDiv.className = 'questions';
-
-        scoutingQuestions.forEach(q => {
-          const questionDiv = document.createElement('div');
-          questionDiv.className = 'question';
-
-          const label = document.createElement('label');
-          label.htmlFor = `${q.id}-${team.id}`;
-          label.textContent = q.label;
-          questionDiv.appendChild(label);
-
-          let input;
-          if (q.type === 'select') {
-            input = document.createElement('select');
-            input.id = `${q.id}-${team.id}`;
-            q.options.forEach(opt => {
-              const option = document.createElement('option');
-              option.value = opt;
-              option.textContent = opt;
-              input.appendChild(option);
-            });
-          } else {
-            input = document.createElement('input');
-            input.type = q.type;
-            input.id = `${q.id}-${team.id}`;
-          }
-
-          questionDiv.appendChild(input);
-          questionsDiv.appendChild(questionDiv);
-        });
-
-        teamDiv.appendChild(questionsDiv);
-        teamsContainer.appendChild(teamDiv);
-      });
-    }
-
-    // Load all teams on page load
-    loadAllTeams();
-  </script>
-
-</body>
-</html>
-
+  <h1>VEX Scouting App</h1>
+  <label for="event-code">Enter Event Code (SKU):</label>
+  <input type="text" id="event-code" placeholder="e.g., RE-VRC-24-59926" />
+  <button onclick="fetchTeams()">Load Teams</button>
+  <div id="team-list"></div>
 </body>
 </html>
