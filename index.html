@@ -3,15 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>VEX Event Scouting - Teams & Questions</title>
+  <title>VEX Event Scouting</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 2rem;
-      max-width: 900px;
-    }
-    h1 {
-      margin-bottom: 1rem;
+      max-width: 1000px;
     }
     .team {
       border: 1px solid #ccc;
@@ -46,24 +43,29 @@
 </head>
 <body>
 
-  <h1>Teams at Event 59926</h1>
+  <h1>Teams at Event</h1>
   <div id="teamsContainer">Loading teams...</div>
 
   <script>
-    const eventId = 59926;
-    const limit = 100;
+    const eventId = 59926; // Replace with your event ID
+    const API_KEY = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzIiwianRpIjoiMmRmOTQzZDg0NDgxOTE5MWIzNWU4OWYxZDgxZjYyZDAyMDcxZDMwOWU5OGNjODFiYjU1OWIyMmViY2Q5YjFkZTgyOTU2NGRlYjM3Mjg2YWUiLCJpYXQiOjE3NDg5MTI3MzkuNTU1ODQsIm5iZiI6MTc0ODkxMjczOS41NTU4NDEsImV4cCI6MjY5NTU5NzUzOS41NTA0MjcsInN1YiI6IjExMzg4MyIsInNjb3BlcyI6W119.gHQWD7TYswi6zt_rO-mlKarGdPITf05hmXq_6It3M3Of_9oJYwuVE_dY97U-QG_L8T2w4X2oqY3vJxG2ummw5Q8Vb4AhbKzfGy31Gl8um7RJyTsnR_V_LTC9y7yx0C_LhVeaLTgEX3PCnu5dbLmOimGxa1UDwGef5TYKg3CiIgvWyg0x9QMVjL_NhUDQHaJu_Fy5FpNEawKjyoVpLhaRyX2QoTmZbaLO8ItKza8Tl3k4mjRU9fF18AizxAiErcTwiQHIZdUBD6ylk_SL_E01nRv0en7VHyko8x0oe161ZT-q3NdXKmTV-o_3L1x-cRGufnaCMfwdmtx5WeAA8xoJ-ccUDBwZDTZbTeZw1VnOQPI_mqhC1cGSOvPmE47lqDPno56cATRNCgyfuPqlYkyvHx09ie9oSOyNiIUGDG82S6742x-0oLGpNTlD3elKUq6j1Q0Wob8SFhhAwMPGjXZRfQQ1YB9qiRssz1M1phWWbyzSfXMoqa2pF0nItWFv3egGXxfcSD70-jfdCcwNg1dNXDy0Ax2jk8Fhmf1jljkKKP0I38FEME2PlNoYfepwIlRJNik7vAaRobXeGIp7l9H_i3Y_ZwVnWqbEd3Lr8MI7BGiegVEbk3T-GzkVL90uTDvnzR6B2Hf0TQCVSlvPNH5LUZ2m2ajk9vVhJESRuvXqSGY"; // <-- INSERT YOUR READ-ONLY API KEY HERE
+    const API_BASE = "https://www.robotevents.com/api/v2";
     const teamsContainer = document.getElementById('teamsContainer');
 
-    // Example questions - customize as needed
     const scoutingQuestions = [
       { id: 'auton', label: 'Autonomous Performance', type: 'select', options: ['Poor', 'Average', 'Good', 'Excellent'] },
       { id: 'driver', label: 'Driver Skill', type: 'select', options: ['Poor', 'Average', 'Good', 'Excellent'] },
       { id: 'notes', label: 'Notes', type: 'text' }
     ];
 
-    async function fetchTeams(page = 1) {
-      const url = `https://www.robotevents.com/api/v2/events/${eventId}/teams?page=${page}&limit=${limit}`;
-      const response = await fetch(url);
+    async function fetchTeamsPage(page = 1) {
+      const url = `${API_BASE}/events/${eventId}/teams?page=${page}&limit=100`;
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${API_KEY}`,
+          'Accept': 'application/json'
+        }
+      });
       if (!response.ok) {
         throw new Error(`API request failed with status ${response.status}`);
       }
@@ -77,8 +79,8 @@
         let totalPages;
 
         do {
-          const data = await fetchTeams(page);
-          allTeams = allTeams.concat(data.data);
+          const data = await fetchTeamsPage(page);
+          allTeams.push(...data.data);
           totalPages = data.meta.last_page;
           page++;
         } while (page <= totalPages);
@@ -100,13 +102,11 @@
         const teamDiv = document.createElement('div');
         teamDiv.className = 'team';
 
-        // Team name only
         const nameEl = document.createElement('div');
         nameEl.className = 'team-name';
         nameEl.textContent = team.team_name;
         teamDiv.appendChild(nameEl);
 
-        // Questions container
         const questionsDiv = document.createElement('div');
         questionsDiv.className = 'questions';
 
@@ -144,9 +144,12 @@
       });
     }
 
-    // Load teams on page load
+    // Load all teams on page load
     loadAllTeams();
   </script>
+
+</body>
+</html>
 
 </body>
 </html>
