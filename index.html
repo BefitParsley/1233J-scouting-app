@@ -1,103 +1,252 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VEX VRC Scouting App</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VEX Scouting Web App</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  textarea {
+    resize: vertical;
+  }
+</style>
 </head>
-<body class="bg-gray-100 text-gray-900">
-  <div class="max-w-6xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-4">VEX VRC Scouting App</h1>
-    <div class="flex gap-4 mb-6">
-      <input id="eventCode" type="text" placeholder="Enter Event Code (e.g. RE-VRC-23-3690)" class="w-full px-4 py-2 border rounded" />
-      <button onclick="loadTeams()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Load Teams</button>
-    </div>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4">
+  <h1 class="text-2xl font-bold mb-4">VEX Scouting Tool</h1>
 
-    <div class="overflow-auto max-h-[70vh]">
-      <table id="scoutingTable" class="min-w-full table-auto border text-sm">
-        <thead class="bg-gray-200">
-          <tr>
-            <th class="border px-2 py-1">Team</th>
-            <th class="border px-2 py-1">Top Level</th>
-            <th class="border px-2 py-1">Second Level</th>
-            <th class="border px-2 py-1">Low Level</th>
-            <th class="border px-2 py-1">Loader Unloading</th>
-            <th class="border px-2 py-1">Auton</th>
-            <th class="border px-2 py-1"># of Pieces</th>
-            <th class="border px-2 py-1">Climb</th>
-            <th class="border px-2 py-1">Buddy Climb</th>
-            <th class="border px-2 py-1">Notes</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-    </div>
-
-    <div class="mt-6">
-      <button onclick="exportCSV()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Export CSV</button>
-    </div>
+  <div class="w-full max-w-xl mb-4">
+    <label for="eventCode" class="block font-semibold mb-1">Event Code:</label>
+    <input
+      id="eventCode"
+      type="text"
+      placeholder="Enter event code (e.g. 2023-1234)"
+      class="w-full p-2 rounded border border-gray-300"
+      />
   </div>
 
-  <script>
-    const apiKey = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzIiwianRpIjoiYmMzYzI4ZDZkY2FkOTZiZGE3ZDFmZmQzNDg2Y2M2NWJjZTk0ZGE5YTMxYzkyZDUxYTdlZDdmZmYzZDNmNmE1M2E1NTk5MmUzYjQ5NjFkZTQiLCJpYXQiOjE3NDg5MDczOTguMTc0MTMyMSwibmJmIjoxNzQ4OTA3Mzk4LjE3NDEzNCwiZXhwIjoyNjk1NTkyMTk4LjE2OTA3NzksInN1YiI6IjExMzg4MyIsInNjb3BlcyI6W119.jOqi_xsUn4GjG8_m0Bx2eGHfBpO2540pjB5MeyxCVxh_6-rXeihvnindMCJRCq6t_5P53EHjhHJYQqh9K7rDbGpFOa_II4Y2J6L6PAnweHS8Llkzz8YgfsJIgJZOgJ9cK7tWZOs4HHrPZeW0Om7YK75rj564x38H8XMV7shEQs-zHWvp6MM6UPeVaLVI_9dm07xfByvOlEFPpucE_TUC2fFrJ1KvqU2H0Hp2iBGnYw2nCw2vK3M-Vsvc4O7h2PKqTfDsK8lIZ8YDw3UMGEyXUvGFtBLayWuUkReO4YqCxQbycSmAE6IAhQP4VVxxLrfSHTMEb-HOFIP9lZjKSLpyncHeP7rKAqF36ALM7iVsQySZYoZOtX7F6ipRmi6CD7_c5s9qp1_qzhSCxjSxqkQd57fK4NNr_WucTkz5NeDWttZib1rbhHTtsBMQJQEMluR4Q_K6GBEdhdP-Nsf3TAIT7LIB-l0QWBP-5yMg0FQYvK1GTTCvK94q7BhCo5srN7buhZlZsqoMRxl2CIItqGPjKgs85DxBkmO-ZtzHcHptzqEaLjceM7ILNKoNS-WMQgz7QdgOrNGUw6WT8nnyfcJL32TsJg5LBmpxzNyyULf3OpA-oPXyhIHVQ0b-44DmTzGOVRrDz7XA6Yqk2-CJCgY2iyCP5Cl8ZNk4d_krbNe7H2s'; // Replace with your read-only RobotEvents API key
+  <button
+    id="fetchBtn"
+    class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 mb-6 w-full max-w-xl"
+  >
+    Fetch Teams
+  </button>
 
-    async function loadTeams() {
-      const eventCode = document.getElementById('eventCode').value.trim();
-      const tableBody = document.getElementById('tableBody');
-      tableBody.innerHTML = '';
+  <div id="status" class="mb-4 text-center text-gray-700"></div>
 
-      if (!eventCode) {
-        alert('Please enter an event code.');
-        return;
+  <div id="teamsContainer" class="w-full max-w-xl space-y-6"></div>
+
+  <button
+    id="exportBtn"
+    class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 mt-6 w-full max-w-xl hidden"
+  >
+    Export to CSV
+  </button>
+
+<script>
+(() => {
+  const API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzIiwianRpIjoiYmMzYzI4ZDZkY2FkOTZiZGE3ZDFmZmQzNDg2Y2M2NWJjZTk0ZGE5YTMxYzkyZDUxYTdlZDdmZmYzZDNmNmE1M2E1NTk5MmUzYjQ5NjFkZTQiLCJpYXQiOjE3NDg5MDczOTguMTc0MTMyMSwibmJmIjoxNzQ4OTA3Mzk4LjE3NDEzNCwiZXhwIjoyNjk1NTkyMTk4LjE2OTA3NzksInN1YiI6IjExMzg4MyIsInNjb3BlcyI6W119.jOqi_xsUn4GjG8_m0Bx2eGHfBpO2540pjB5MeyxCVxh_6-rXeihvnindMCJRCq6t_5P53EHjhHJYQqh9K7rDbGpFOa_II4Y2J6L6PAnweHS8Llkzz8YgfsJIgJZOgJ9cK7tWZOs4HHrPZeW0Om7YK75rj564x38H8XMV7shEQs-zHWvp6MM6UPeVaLVI_9dm07xfByvOlEFPpucE_TUC2fFrJ1KvqU2H0Hp2iBGnYw2nCw2vK3M-Vsvc4O7h2PKqTfDsK8lIZ8YDw3UMGEyXUvGFtBLayWuUkReO4YqCxQbycSmAE6IAhQP4VVxxLrfSHTMEb-HOFIP9lZjKSLpyncHeP7rKAqF36ALM7iVsQySZYoZOtX7F6ipRmi6CD7_c5s9qp1_qzhSCxjSxqkQd57fK4NNr_WucTkz5NeDWttZib1rbhHTtsBMQJQEMluR4Q_K6GBEdhdP-Nsf3TAIT7LIB-l0QWBP-5yMg0FQYvK1GTTCvK94q7BhCo5srN7buhZlZsqoMRxl2CIItqGPjKgs85DxBkmO-ZtzHcHptzqEaLjceM7ILNKoNS-WMQgz7QdgOrNGUw6WT8nnyfcJL32TsJg5LBmpxzNyyULf3OpA-oPXyhIHVQ0b-44DmTzGOVRrDz7XA6Yqk2-CJCgY2iyCP5Cl8ZNk4d_krbNe7H2s'; // <-- Paste your RobotEvents read-only API key here
+
+  const questions = [
+    'Top level scoring',
+    'Second level scoring',
+    'Low level scoring',
+    'Loader unloading',
+    'Auton',
+    'How many pieces',
+    'Climb',
+    'Buddy climb',
+    'Notes',
+  ];
+
+  const eventCodeInput = document.getElementById('eventCode');
+  const fetchBtn = document.getElementById('fetchBtn');
+  const statusDiv = document.getElementById('status');
+  const teamsContainer = document.getElementById('teamsContainer');
+  const exportBtn = document.getElementById('exportBtn');
+
+  let teams = [];
+
+  // Save/load scouting data locally by team number
+  function saveData(teamNumber, data) {
+    const allData = JSON.parse(localStorage.getItem('scoutingData') || '{}');
+    allData[teamNumber] = data;
+    localStorage.setItem('scoutingData', JSON.stringify(allData));
+  }
+
+  function loadData(teamNumber) {
+    const allData = JSON.parse(localStorage.getItem('scoutingData') || '{}');
+    return allData[teamNumber] || {};
+  }
+
+  // Create a team card with inputs
+  function createTeamCard(team) {
+    const savedData = loadData(team.number);
+
+    const container = document.createElement('div');
+    container.className = 'bg-white p-4 rounded shadow';
+
+    const header = document.createElement('h2');
+    header.className = 'font-bold text-lg mb-2';
+    header.textContent = `Team #${team.number}`;
+    container.appendChild(header);
+
+    questions.forEach((q) => {
+      const label = document.createElement('label');
+      label.className = 'block font-medium mt-3';
+      label.textContent = q;
+
+      if (q === 'Notes') {
+        const textarea = document.createElement('textarea');
+        textarea.className = 'w-full p-2 border border-gray-300 rounded';
+        textarea.rows = 3;
+        textarea.value = savedData[q] || '';
+        textarea.addEventListener('input', () => {
+          savedData[q] = textarea.value;
+          saveData(team.number, savedData);
+        });
+        label.appendChild(textarea);
+      } else {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'w-full p-2 border border-gray-300 rounded';
+        input.value = savedData[q] || '';
+        input.addEventListener('input', () => {
+          savedData[q] = input.value;
+          saveData(team.number, savedData);
+        });
+        label.appendChild(input);
       }
 
-      try {
-        const eventRes = await fetch(`https://www.robotevents.com/api/v2/events?sku=${eventCode}`, {
-          headers: { Authorization: `Bearer ${apiKey}` }
-        });
-        const eventData = await eventRes.json();
-        if (!eventData.data.length) throw new Error('Event not found');
+      container.appendChild(label);
+    });
 
-        const eventId = eventData.data[0].id;
-        const teamRes = await fetch(`https://www.robotevents.com/api/v2/events/${eventId}/teams`, {
-          headers: { Authorization: `Bearer ${apiKey}` }
-        });
-        const teamData = await teamRes.json();
+    return container;
+  }
 
-        teamData.data.forEach(team => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td class="border px-2 py-1 font-medium">${team.team_number}</td>
-            ${[...Array(8)].map(() => `<td class="border px-2 py-1"><input type="text" class="w-full px-1 py-1 border rounded"></td>`).join('')}
-            <td class="border px-2 py-1"><textarea class="w-full px-1 py-1 border rounded"></textarea></td>
-          `;
-          tableBody.appendChild(row);
-        });
-      } catch (error) {
-        alert('Error loading teams: ' + error.message);
-      }
+  async function fetchJson(url) {
+    const res = await fetch(url, {
+      headers: {
+        Authorization: 'Bearer ' + API_KEY,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!res.ok) {
+      throw new Error(`HTTP error! Status: ${res.status} - ${await res.text()}`);
+    }
+    return res.json();
+  }
+
+  async function fetchTeams(eventCode) {
+    statusDiv.textContent = 'Loading event ID...';
+    teamsContainer.innerHTML = '';
+    exportBtn.style.display = 'none';
+
+    // Step 1: Get event ID from SKU
+    const eventData = await fetchJson(`https://www.robotevents.com/api/v2/events?sku=${encodeURIComponent(eventCode)}`);
+
+    if (!eventData.data || eventData.data.length === 0) {
+      throw new Error('No event found with that code.');
+    }
+    const eventId = eventData.data[0].id;
+    statusDiv.textContent = `Event ID: ${eventId}. Fetching teams...`;
+
+    // Step 2: Fetch all teams with pagination
+    let allTeams = [];
+    let page = 1;
+    const limit = 100;
+    while (true) {
+      statusDiv.textContent = `Fetching teams, page ${page}...`;
+      const teamPage = await fetchJson(`https://www.robotevents.com/api/v2/events/${eventId}/teams?page=${page}&limit=${limit}`);
+      if (!teamPage.data || teamPage.data.length === 0) break;
+      allTeams = allTeams.concat(teamPage.data);
+      if (teamPage.data.length < limit) break;
+      page++;
     }
 
-    function exportCSV() {
-      const rows = document.querySelectorAll('#scoutingTable tbody tr');
-      const headers = ["Team", "Top Level", "Second Level", "Low Level", "Loader Unloading", "Auton", "# of Pieces", "Climb", "Buddy Climb", "Notes"];
-      const csv = [headers.join(',')];
+    if (allTeams.length === 0) {
+      throw new Error('No teams found for this event.');
+    }
 
-      rows.forEach(row => {
-        const values = [...row.querySelectorAll('td')].map(td => {
-          const input = td.querySelector('input, textarea');
-          return input ? '"' + input.value.replace(/"/g, '""') + '"' : td.innerText;
-        });
-        csv.push(values.join(','));
+    return allTeams;
+  }
+
+  function exportToCSV() {
+    const allData = JSON.parse(localStorage.getItem('scoutingData') || '{}');
+    if (teams.length === 0) {
+      alert('No teams loaded.');
+      return;
+    }
+    const headers = ['Team Number', ...questions];
+    const rows = [headers];
+
+    teams.forEach((team) => {
+      const data = allData[team.number] || {};
+      const row = [team.number];
+      questions.forEach((q) => {
+        row.push((data[q] || '').replace(/"/g, '""')); // Escape quotes
       });
+      rows.push(row);
+    });
 
-      const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'scouting_data.csv';
-      link.click();
+    const csvContent = rows
+      .map((r) => r.map((v) => `"${v}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vex_scouting_${Date.now()}.csv`;
+    a.style.display = 'none';
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  fetchBtn.addEventListener('click', async () => {
+    const eventCode = eventCodeInput.value.trim();
+    if (!eventCode) {
+      alert('Please enter an event code.');
+      return;
     }
-  </script>
+    try {
+      fetchBtn.disabled = true;
+      statusDiv.textContent = 'Fetching teams...';
+      teams = await fetchTeams(eventCode);
+      statusDiv.textContent = `Loaded ${teams.length} teams.`;
+
+      teamsContainer.innerHTML = '';
+      teams.forEach((team) => {
+        teamsContainer.appendChild(createTeamCard(team));
+      });
+      exportBtn.style.display = 'block';
+    } catch (err) {
+      alert(err.message);
+      statusDiv.textContent = '';
+      teamsContainer.innerHTML = '';
+      exportBtn.style.display = 'none';
+    } finally {
+      fetchBtn.disabled = false;
+    }
+  });
+
+  exportBtn.addEventListener('click', exportToCSV);
+
+  // Load saved event code on startup (optional)
+  window.addEventListener('load', () => {
+    const savedEventCode = localStorage.getItem('lastEventCode') || '';
+    if (savedEventCode) {
+      eventCodeInput.value = savedEventCode;
+    }
+  });
+
+  // Save event code when changed
+  eventCodeInput.addEventListener('change', () => {
+    localStorage.setItem('lastEventCode', eventCodeInput.value.trim());
+  });
+})();
+</script>
 </body>
 </html>
